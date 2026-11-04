@@ -9,12 +9,13 @@
 # =============================================================================
 
 reps="1-30"
-resources="-c 1 --mem=8G -t 24:00:00"
+resources="-c 1 --mem=32G -t 24:00:00"
 scenarios="PS_RCBD GS_RCBD GS_Augmented GS_pREP_odw"
 
 # Inside the Slurm job: one replicate of one script
 if [ "$1" == "--job" ]; then
   module load r-bio
+  export OMP_NUM_THREADS=1 # sommer/odw: one thread per job (more threads were much slower)
   Rscript "code/scenarios/$2.R" "$SLURM_ARRAY_TASK_ID"
   exit $?
 fi
