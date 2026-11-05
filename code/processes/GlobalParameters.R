@@ -30,15 +30,14 @@ nEnvS3 <- 1
 nEnvS4 <- 1
 nEnvS5 <- 4
 
-# Plot error variances. S1 and S2 calibrated from the realised h2 at the end of the
-# burn-in (h2 = sg2 / (sg2 + varE) -> varE = sg2 * (1 - h2) / h2):
-#   S1: h2 = 0.17 with varE = 10 -> sg2 ~ 2.0 -> target h2 ~ 0.1 -> varE ~ 18
-#   S2: h2 = 0.16 with varE = 9  -> sg2 ~ 1.7 -> target h2 ~ 0.2 -> varE ~ 6.5
+# Plot error variances, calibrated to a target reliability r of the entry means
+# (Reliability.R, 05/11/2026): varE = reps * locs * var_g * (1 - r) / r, with the
+# var_g of each stage in PS_RCBD and a factor 1.17 for the spatial part of the error
 varES1 <- 18 # target h2 S1 = 0.1 (single plot)
-varES2 <- 6.5 # target h2 S2 = 0.2 (single plot)
-varES3 <- 8 # TODO: calibrate to target h2 S3 = 0.6 (mean of 3 reps)
-varES4 <- 4 # TODO: calibrate to target h2 S4 = 0.6 (mean of 3 reps)
-varES5 <- 2 # TODO: calibrate to target h2 S5 = 0.8 (mean of 4 reps x 4 locs)
+varES2 <- 6.5 # reliability S2 ~ 0.15 (single plot; var_g ~ 1.17)
+varES3 <- 2.1 # reliability S3 ~ 0.6 (mean of 3 reps; var_g ~ 1.23)
+varES4 <- 0.7 # reliability S4 ~ 0.8 (mean of 3 reps; var_g ~ 1.09)
+varES5 <- 0.8 # reliability S5 ~ 0.9 (mean of 4 reps x 4 locs; var_g ~ 0.51)
 
 nColS1 <- 200
 nColS2 <- 50
