@@ -31,13 +31,13 @@ nEnvS4 <- 1
 nEnvS5 <- 4
 
 # Plot error variances, calibrated to a target reliability r of the entry means
-# (Reliability.R, 05/11/2026): varE = reps * locs * var_g * (1 - r) / r, with the
-# var_g of each stage in PS_RCBD and a factor 1.17 for the spatial part of the error
+# with Reliability.R (2 rounds, 05/11/2026): new varE = old varE * (error of the
+# means needed for r) / (error of the means observed), error = var_g * (1 - r) / r
 varES1 <- 18 # target h2 S1 = 0.1 (single plot)
-varES2 <- 6.5 # reliability S2 ~ 0.15 (single plot; var_g ~ 1.17)
-varES3 <- 2.1 # reliability S3 ~ 0.6 (mean of 3 reps; var_g ~ 1.23)
-varES4 <- 0.7 # reliability S4 ~ 0.8 (mean of 3 reps; var_g ~ 1.09)
-varES5 <- 0.8 # reliability S5 ~ 0.9 (mean of 4 reps x 4 locs; var_g ~ 0.51)
+varES2 <- 6.5 # reliability S2 ~ 0.15 (single plot; observed 0.14)
+varES3 <- 1.7 # reliability S3 ~ 0.6 (mean of 3 reps; 0.55 with varE = 2.1)
+varES4 <- 0.5 # reliability S4 ~ 0.8 (mean of 3 reps; 0.74 with varE = 0.7)
+varES5 <- 0.5 # reliability S5 ~ 0.9 (mean of 4 reps x 4 locs; 0.84 with varE = 0.8)
 
 nColS1 <- 200
 nColS2 <- 50

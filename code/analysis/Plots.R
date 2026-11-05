@@ -130,15 +130,16 @@ p2 <- summary_results |>
   theme_bw() +
   theme(legend.position = "top")
 
-p12 <- p1 + p2 +
+p12 <- p1 +
+  p2 +
   plot_layout(guides = "collect") &
   theme(legend.position = "top")
-p12
+
 ggsave(
   "outputs/plots/genetic_gain.png",
   p12,
-  width = 12,
-  height = 5,
+  width = 7,
+  height = 4,
   dpi = 300,
   bg = "white"
 )
@@ -174,10 +175,11 @@ p4 <- summary_results |>
   theme_bw() +
   theme(legend.position = "top")
 
-p34 <- p3 + p4 +
+p34 <- p3 +
+  p4 +
   plot_layout(widths = c(2, 1), guides = "collect") &
   theme(legend.position = "top")
-p34
+
 ggsave(
   "outputs/plots/selection_accuracy.png",
   p34,
