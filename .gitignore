@@ -5,3 +5,4 @@
 outputs/**/*.RData
 outputs/**/*.csv
 logs/
+!outputs/*_output.csv
