@@ -212,10 +212,11 @@ if (S3design == "pREP_TrainSel") {
   # TrainSel licence (more than 100 integers), from ~/.Renviron
   ts_user <- as.numeric(Sys.getenv("TRAINSEL_USER"))
   ts_password <- as.numeric(Sys.getenv("TRAINSEL_PASSWORD"))
-  if (is.na(ts_user) || is.na(ts_password)) {
-    stop("PhenotypeS3.R: set TRAINSEL_USER and TRAINSEL_PASSWORD in ~/.Renviron")
-  }
-  ts_control <- SetControlDefault(size = "small", verbose = FALSE)
+
+  ts_control <- SetControlDefault(
+    size = "large",
+    complexity = "high_complexity"
+  )
   ts_control$progress <- FALSE
 
   # Choose replicated entries: lowest average relationship (Avg_GRM_self)
