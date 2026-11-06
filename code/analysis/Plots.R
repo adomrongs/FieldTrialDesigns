@@ -10,12 +10,19 @@ library(dplyr)
 library(patchwork)
 
 # Define scenarios and colours (the same colour for each scenario in every plot)
-scenarios <- c("PS_RCBD", "GS_RCBD", "GS_Augmented", "GS_pREP_odw")
+scenarios <- c(
+  "PS_RCBD",
+  "GS_RCBD",
+  "GS_Augmented",
+  "GS_pREP_odw",
+  "GS_pREP_TrainSel"
+)
 colors_scenario <- c(
   PS_RCBD = "#335c67",
   GS_RCBD = "#2d6a4f",
   GS_Augmented = "#fff3b0",
-  GS_pREP_odw = "#540b0e"
+  GS_pREP_odw = "#540b0e",
+  GS_pREP_TrainSel = "#e09f3e"
 )
 
 # colors_scenario <- c(
@@ -37,20 +44,23 @@ plots_S3 <- c(
   PS_RCBD = 600,
   GS_RCBD = 600,
   GS_Augmented = 240,
-  GS_pREP_odw = 250
+  GS_pREP_odw = 228,
+  GS_pREP_TrainSel = 228
 )
 cost_S2 <- c(
   PS_RCBD = 1000 * cost_plot_S2,
   GS_RCBD = 1000 * cost_geno,
   GS_Augmented = 1000 * cost_geno,
-  GS_pREP_odw = 1000 * cost_geno
+  GS_pREP_odw = 1000 * cost_geno,
+  GS_pREP_TrainSel = 1000 * cost_geno
 )
 cost_scenario <- cost_S2 + plots_S3 * cost_plot_S3
 
 # Read outputs
 burnin <- read.csv("outputs/BurnIn_output.csv")
+future_files <- file.path("outputs", paste0(scenarios, "_output.csv"))
 future <- bind_rows(
-  lapply(file.path("outputs", paste0(scenarios, "_output.csv")), read.csv)
+  lapply(future_files[file.exists(future_files)], read.csv) # scenarios already run
 )
 last_burnin <- max(burnin$year)
 

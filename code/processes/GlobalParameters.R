@@ -57,11 +57,12 @@ nS3 <- 200
 nS4 <- 20
 nS5 <- 5
 
-# S3 p-rep design (odw): 25 % of the nS3 entries with 2 plots, the rest with 1
-pRepS3 <- 0.25
-nRepS3pREP <- pRepS3 * nS3 # 50 replicated entries -> 50 x 2 + 150 x 1 = 250 plots
-nRowS3pREP <- 10 # two resolvable halves of 5 x 25 (rows 1-5 and 6-10), each
-nColS3pREP <- 25 # replicated entry once per half
+# S3 p-rep design (odw and TrainSel): replicated entries ~25 % of each block, as
+# in Fernandez-Gonzalez et al. (2026) with 20 %: r = 0.25 * (nS3 + r) / 2 -> r ~ 28.6
+# -> 28 entries with 2 plots + 172 with 1 = 228 plots (28 / 114 = 24.6 % per block)
+nRepS3pREP <- 28
+nRowS3pREP <- 12 # two resolvable halves of 6 x 19 (rows 1-6 and 7-12), each
+nColS3pREP <- 19 # replicated entry once per half
 
 # S3 augmented design: nChecksS3 checks (best S4 at the end of the burn-in, fixed)
 # in each of nBlocksAugS3 blocks -> nS3 + nChecksS3 * nBlocksAugS3 = 240 plots

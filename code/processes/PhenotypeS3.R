@@ -13,7 +13,7 @@ if (S3design == "RCBD") {
   )
 }
 
-if (S3design %in% c("pREP_odw", "Augmented")) {
+if (S3design %in% c("pREP_odw", "pREP_TrainSel", "Augmented")) {
   # Add checks if needed
   design_pop <- if (S3design == "Augmented") {
     mergePops(list(S3, checks_S3))
@@ -34,7 +34,9 @@ if (S3design %in% c("pREP_odw", "Augmented")) {
   G_s3 <- G_s3 / mean(diag(G_s3)) + diag(1e-3, nrow(G_s3))
   Ginv_s3 <- solve(G_s3)
   attr(Ginv_s3, "INVERSE") <- TRUE
+}
 
+if (S3design %in% c("pREP_odw", "Augmented")) {
   # Fix odw GRM input
   ginv_stage2 <- paste("Ginv", S3design, "stage2", Rep, year, sep = "_")
   ginv_stage3 <- paste("Ginv", S3design, "stage3", Rep, year, sep = "_")
@@ -204,4 +206,98 @@ if (S3design %in% c("pREP_odw", "Augmented")) {
   source("code/processes/PhenotypeDesign.R")
 
   rm(list = c(ginv_stage2, ginv_stage3)) # free the copies of this year
+}
+
+if (S3design == "pREP_TrainSel") {
+  # TrainSel licence (more than 100 integers), from ~/.Renviron
+  ts_user <- as.numeric(Sys.getenv("TRAINSEL_USER"))
+  ts_password <- as.numeric(Sys.getenv("TRAINSEL_PASSWORD"))
+  if (is.na(ts_user) || is.na(ts_password)) {
+    stop("PhenotypeS3.R: set TRAINSEL_USER and TRAINSEL_PASSWORD in ~/.Renviron")
+  }
+  ts_control <- SetControlDefault(size = "small", verbose = FALSE)
+  ts_control$progress <- FALSE
+
+  # Choose replicated entries: lowest average relationship (Avg_GRM_self)
+  log_ts <- capture.output(
+    opt_rep <- TrainSel(
+      Data = list(G = G_s3),
+      Candidates = list(seq_len(nrow(G_s3))),
+      setsizes = nRepS3pREP,
+      settypes = "UOS",
+      Stat = avg_grm_self,
+      control = ts_control,
+      Username = ts_user,
+      Password = ts_password,
+      Verbose = FALSE
+    )
+  )
+  ids_rep <- rownames(G_s3)[opt_rep$BestSol_int]
+  ids_unrep <- sample(setdiff(rownames(G_s3), ids_rep))
+
+  # Prepare initial design: replicated entries once in each half, unreplicated
+  # split at random, random order within halves
+  n_unrep_half <- length(ids_unrep) / 2
+  init_ts <- expand.grid(
+    row = seq_len(nRowS3pREP),
+    col = seq_len(nColS3pREP)
+  ) |>
+    mutate(block = if_else(row <= nRowS3pREP / 2, 1, 2)) |>
+    arrange(block, col, row) |>
+    mutate(
+      name = c(
+        sample(c(ids_rep, ids_unrep[seq_len(n_unrep_half)])),
+        sample(c(ids_rep, ids_unrep[-seq_len(n_unrep_half)]))
+      )
+    )
+
+  # Design model as in odw: block fixed, genotypes with G_s3 (sigma_g = 1),
+  # AR1 x AR1 residual with sigma_e = 1 / gammaS3
+  X_ts <- model.matrix(~ -1 + factor(block), data = init_ts)
+  R_ts <- corColS3^abs(outer(init_ts$col, init_ts$col, "-")) *
+    corRowS3^abs(outer(init_ts$row, init_ts$row, "-")) /
+    gammaS3
+  Rinv_ts <- solve(R_ts)
+  data_ts <- list(
+    G = G_s3,
+    Ginv = Ginv_s3,
+    Rinv = Rinv_ts,
+    RinvX = Rinv_ts %*% X_ts,
+    tXRinvX = crossprod(X_ts, Rinv_ts %*% X_ts),
+    items = init_ts$name,
+    genos = rownames(G_s3),
+    half = init_ts$block
+  )
+
+  # Allocate genotypes to plots: maximise CDmean, any entry can move to any
+  # plot (replicated entries kept once per half)
+  n_plots <- nrow(init_ts)
+  log_ts <- capture.output(
+    opt_design <- TrainSel(
+      Data = data_ts,
+      Candidates = list(seq_len(n_plots)),
+      setsizes = n_plots,
+      settypes = "OS",
+      Stat = cdmean_prep,
+      InitSol = MakeInitSol(
+        int_solutions = seq_len(n_plots),
+        settypes = "OS",
+        setsizes = n_plots
+      ),
+      control = ts_control,
+      Username = ts_user,
+      Password = ts_password,
+      Verbose = FALSE
+    )
+  )
+
+  # Extract final layout
+  design_layout <- init_ts |>
+    transmute(row, col, block, id = data_ts$items[opt_design$BestSol_int])
+  design_pop <- S3
+  design_ncols <- nColS3pREP
+  design_nrows <- nRowS3pREP
+  design_envs <- met_envs(samples_met, simYear, nEnvS3)
+  design_varR <- varES3
+  source("code/processes/PhenotypeDesign.R")
 }

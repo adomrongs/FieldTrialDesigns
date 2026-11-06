@@ -5,7 +5,7 @@
 # =============================================================================
 library(dplyr)
 
-for (scenario in c("BurnIn", "PS_RCBD", "GS_RCBD", "GS_Augmented", "GS_pREP_odw")) {
+for (scenario in c("BurnIn", "PS_RCBD", "GS_RCBD", "GS_Augmented", "GS_pREP_odw", "GS_pREP_TrainSel")) {
   files <- list.files(
     file.path("outputs", scenario),
     pattern = "_rep[0-9]+\\.csv$",

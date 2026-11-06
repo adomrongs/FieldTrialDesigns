@@ -205,3 +205,31 @@ store_training <- function(train_data, res, year, stage) {
   }
   train_data
 }
+
+
+# -------------------------------- avg_grm_self --------------------------------
+# TrainSel criterion (Fernandez-Gonzalez et al. 2023): minus the mean relationship
+# of the selected entries, diagonal included (TrainSel maximises)
+avg_grm_self <- function(soln, Data) {
+  -mean(Data[["G"]][soln, soln])
+}
+
+
+# -------------------------------- cdmean_prep ---------------------------------
+# TrainSel criterion: CDmean of the p-rep design given by soln (order of the plots);
+# -(repeats) if a replicated entry appears twice in the same half
+cdmean_prep <- function(soln, Data) {
+  plot_names <- Data$items[soln]
+  n_dup <- sum(duplicated(plot_names[Data$half == 1])) +
+    sum(duplicated(plot_names[Data$half == 2]))
+  if (n_dup > 0) {
+    return(-n_dup)
+  }
+
+  Z <- model.matrix(~ factor(plot_names, levels = Data$genos) - 1)
+  C12 <- crossprod(Data$RinvX, Z)
+  C22 <- crossprod(Z, Data$Rinv %*% Z) + Data$Ginv
+  C <- rbind(cbind(Data$tXRinvX, C12), cbind(t(C12), C22))
+  PEV <- diag(chol2inv(chol(C)))[-seq_len(ncol(Data$tXRinvX))]
+  mean((diag(Data$G) - PEV) / diag(Data$G))
+}

@@ -1,5 +1,5 @@
-# Script to run the GS scenario assuming a p-rep design with 25 % of the entries
-# replicated (odw with the GRM, a new design every year)
+# Script to run the GS scenario assuming a p-rep design (replicated entries ~25 %
+# of each block) optimised with odw and the GRM every year
 
 # ------- Prepare Data -------
 # Load packages

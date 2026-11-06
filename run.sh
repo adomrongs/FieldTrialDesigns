@@ -10,7 +10,7 @@
 
 reps="1-30"
 resources="-c 1 --mem=32G -t 24:00:00"
-scenarios="PS_RCBD GS_RCBD GS_Augmented GS_pREP_odw"
+scenarios="PS_RCBD GS_RCBD GS_Augmented GS_pREP_odw GS_pREP_TrainSel"
 
 # Inside the Slurm job: one replicate of one script
 if [ "$1" == "--job" ]; then
