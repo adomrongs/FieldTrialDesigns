@@ -5,12 +5,12 @@
 #   bash run.sh burnin          burn-in
 #   bash run.sh all             burn-in + every scenario (each replicate of a
 #                               scenario starts when its burn-in has finished)
-#   bash run.sh GS_pREP_odw     one scenario (needs the burn-in RData)
+#   bash run.sh I3           one scenario (needs the burn-in RData)
 # =============================================================================
 
 reps="1-30"
 resources="-c 1 --mem=32G -t 24:00:00"
-scenarios="PS_RCBD GS_RCBD GS_Augmented GS_pREP_odw GS_pREP_TrainSel"
+scenarios="PS_RCBD GS_RCBD ES2 ES2_ST I1 I2 I3 I4 ES1 I3_FixedRandom I3_FixedGRM"
 
 # Inside the Slurm job: one replicate of one script
 if [ "$1" == "--job" ]; then

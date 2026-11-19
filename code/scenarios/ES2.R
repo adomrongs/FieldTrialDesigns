@@ -1,11 +1,10 @@
-# Script to run the GS scenario assuming an augmented design with 4 checks in
-# each of 10 blocks (odw with the GRM, a new design every year)
+# Script to run the scenario ES2: extreme 2 (minimum to S4): S3 complete unreplicated multi-location trial, the 200 entries once in each of 4 sites (800 plots); S4 p-rep in 1 site (25 plots).
+# Budget of S3 + S4 = 240,000 EUR/year (16 % to S4)
 
 # ------- Prepare Data -------
 # Load packages
 library(AlphaSimR)
 library(FieldSimR)
-library(SpATS)
 library(sommer)
 library(odw)
 library(dplyr)
@@ -19,36 +18,27 @@ cat("\nWorking on replicate:", Rep, "\n")
 load(file.path("outputs", "burnin", sprintf("BurnIn_rep%02d.RData", Rep)))
 source("code/processes/GlobalParameters.R")
 source("code/processes/HelperFunctions.R")
-Scenario <- "GS_Augmented"
-S3design <- "Augmented"
+Scenario <- "ES2"
 
-# Define checks: best S4 at the end of the burn-in, fixed for all the years
-# (ebv slot as in S3 so that mergePops() works)
-checks_S3 <- selectInd(pop = S4, nInd = nChecksS3)
-checks_S3@ebv <- matrix(NA_real_, nrow = nChecksS3, ncol = 1)
+# Designs of S3 and S4
+S3design <- "RCBD" # 200 entries once in each of 4 sites (20 x 10 per site)
+nSitesS3 <- 4
+nRepS3 <- 1
+nColS3 <- 20
+nRowS3 <- 10
+S4design <- "pREP" # 1 site x (20 + 5 replicated)
+nSitesS4 <- 1
+
+# GS genotypes nS2GS S2 (same budget as the 500 phenotyped in PS): select them
+# again from the S1 of the last burn-in year
+S2 <- selectInd(pop = S1, nInd = nS2GS)
 
 # Define output
-future_years <- (nCycles + 1):(nCycles + nFuture)
-output <- data.frame(
-  year = future_years,
-  rep = Rep,
-  scenario = Scenario,
-  mean_gv_tpe = NA_real_,
-  mean_gv_met = NA_real_,
-  var_gv_tpe = NA_real_,
-  var_gv_met = NA_real_,
-  acc_tpe = NA_real_,
-  acc_met = NA_real_,
-  met_tpe = NA_real_,
-  h2 = NA_real_,
-  acc_gs = NA_real_,
-  acc_S3_met = NA_real_,
-  acc_S3_tpe = NA_real_,
-  resp_S4 = NA_real_
-)
+output_years <- (nCycles + 1):(nCycles + nFuture)
+source("code/processes/StoreVariables.R")
 
 # ------- Run Future scenario -------
-for (year in future_years) {
+for (year in output_years) {
   cat("Working on year: ", year)
   simYear <- nStages + year
 
@@ -59,7 +49,7 @@ for (year in future_years) {
   source("code/processes/AdvanceYearGS.R")
 }
 
-# Save the results of this replicate 
+# Save the results of this replicate (combined with code/analysis/CombineOutputs.R)
 dir.create(
   file.path("outputs", Scenario),
   showWarnings = FALSE,

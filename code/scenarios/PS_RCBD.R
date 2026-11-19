@@ -1,4 +1,5 @@
-# Script to run the PS scenario assuming a RCBD with 3 blocks
+# Script to run the PS scenario (reference): S3 RCBD (1 site x 3 blocks, 600
+# plots) and S4 RCBD (1 site x 3 blocks, 60 plots), selection on phenotype means
 
 # ------- Prepare Data -------
 # Load packages
@@ -16,29 +17,15 @@ load(file.path("outputs", "burnin", sprintf("BurnIn_rep%02d.RData", Rep)))
 source("code/processes/GlobalParameters.R")
 source("code/processes/HelperFunctions.R")
 Scenario <- "PS_RCBD"
-S3design <- "RCBD"
+S3design <- "RCBD" # 200 entries, 1 site x 3 blocks (60 x 10)
+S4design <- "RCBD" # 20 entries, 1 site x 3 blocks (12 x 5)
 
 # Define output
-future_years <- (nCycles + 1):(nCycles + nFuture)
-output <- data.frame(
-  year = future_years,
-  rep = Rep,
-  scenario = Scenario,
-  mean_gv_tpe = NA_real_,
-  mean_gv_met = NA_real_,
-  var_gv_tpe = NA_real_,
-  var_gv_met = NA_real_,
-  acc_tpe = NA_real_,
-  acc_met = NA_real_,
-  met_tpe = NA_real_,
-  h2 = NA_real_,
-  acc_S3_met = NA_real_,
-  acc_S3_tpe = NA_real_,
-  resp_S4 = NA_real_
-)
+output_years <- (nCycles + 1):(nCycles + nFuture)
+source("code/processes/StoreVariables.R")
 
 # ------- Run Future scenario -------
-for (year in future_years) {
+for (year in output_years) {
   cat("Working on year: ", year)
   simYear <- nStages + year
 
@@ -47,7 +34,7 @@ for (year in future_years) {
   source("code/processes/AdvanceYear.R")
 }
 
-# Save the results of this replicate 
+# Save the results of this replicate (combined with code/analysis/CombineOutputs.R)
 dir.create(
   file.path("outputs", Scenario),
   showWarnings = FALSE,

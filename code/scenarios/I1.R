@@ -1,11 +1,10 @@
-# Script to run the GS scenario assuming a p-rep design (replicated entries ~25 %
-# of each block) optimised with odw and the GRM every year
+# Script to run the scenario I1: intermediate 1: S3 sparse testing in 6 sites (440 entries, 660 plots); S4 p-rep in 2 sites (50 plots).
+# Budget of S3 + S4 = 240,000 EUR/year (31 % to S4)
 
 # ------- Prepare Data -------
 # Load packages
 library(AlphaSimR)
 library(FieldSimR)
-library(SpATS)
 library(sommer)
 library(odw)
 library(dplyr)
@@ -19,31 +18,28 @@ cat("\nWorking on replicate:", Rep, "\n")
 load(file.path("outputs", "burnin", sprintf("BurnIn_rep%02d.RData", Rep)))
 source("code/processes/GlobalParameters.R")
 source("code/processes/HelperFunctions.R")
-Scenario <- "GS_pREP_odw"
-S3design <- "pREP_odw"
+Scenario <- "I1"
+
+# Designs of S3 and S4
+S3design <- "sparse" # 44 commons + 66 uniques per site (10 x 11)
+nSitesS3 <- 6
+nS3 <- 440
+nCommonS3 <- 44
+nRowS3 <- 10
+nColS3 <- 11
+S4design <- "pREP" # 2 sites x (20 + 5 replicated)
+nSitesS4 <- 2
+
+# GS genotypes nS2GS S2 (same budget as the 500 phenotyped in PS): select them
+# again from the S1 of the last burn-in year
+S2 <- selectInd(pop = S1, nInd = nS2GS)
 
 # Define output
-future_years <- (nCycles + 1):(nCycles + nFuture)
-output <- data.frame(
-  year = future_years,
-  rep = Rep,
-  scenario = Scenario,
-  mean_gv_tpe = NA_real_,
-  mean_gv_met = NA_real_,
-  var_gv_tpe = NA_real_,
-  var_gv_met = NA_real_,
-  acc_tpe = NA_real_,
-  acc_met = NA_real_,
-  met_tpe = NA_real_,
-  h2 = NA_real_,
-  acc_gs = NA_real_,
-  acc_S3_met = NA_real_,
-  acc_S3_tpe = NA_real_,
-  resp_S4 = NA_real_
-)
+output_years <- (nCycles + 1):(nCycles + nFuture)
+source("code/processes/StoreVariables.R")
 
 # ------- Run Future scenario -------
-for (year in future_years) {
+for (year in output_years) {
   cat("Working on year: ", year)
   simYear <- nStages + year
 
@@ -54,7 +50,7 @@ for (year in future_years) {
   source("code/processes/AdvanceYearGS.R")
 }
 
-# Save the results of this replicate 
+# Save the results of this replicate (combined with code/analysis/CombineOutputs.R)
 dir.create(
   file.path("outputs", Scenario),
   showWarnings = FALSE,

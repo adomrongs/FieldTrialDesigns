@@ -36,15 +36,8 @@ for (year in 1:nStages) {
 
   if (year <= 2) {
     S4 <- selectInd(pop = S3, nInd = nS4)
-    S4 <- phenotype_met(
-      pop = S4,
-      envs = met_envs(samples_met, simYear, nEnvS4),
-      cov.mat = covs_tpe,
-      nreps = nRepS4,
-      varR = varES4,
-      ncols = nColS4,
-      nrows = nRowS4
-    )
+    source("code/processes/PhenotypeS4.R") # RCBD (S4design of the burn-in)
+    S4 <- res$pop[res$pop@id %in% S4@id]
   }
 
   if (year <= 1) {

@@ -1,15 +1,22 @@
-# Phenotype a single-environment trial whose layout is already given (an odw
+# Phenotype a trial in one or more sites whose layout is already given (odw
 # design), instead of letting FieldSimR randomise it as phenotype_met() does.
 # Input:  design_pop    pop with every id of the layout
-#         design_layout data.frame row, col, block, id (one row per plot)
-#         design_envs   environment of the trial (one row of covs_tpe)
-#         design_varR, design_ncols, design_nrows, covs_tpe
+#         design_layout data.frame site, row, col, id (one row per plot)
+#         design_envs   environment of each site (rows of covs_tpe), in site order
+#         design_varR, design_ncols, design_nrows (field of one site), covs_tpe
 # Output: res = list(pop, pheno), as phenotype_met(return.pheno = TRUE), so it can
-#         go straight to store_training(); pop@pheno = mean of the plots of each id
+#         go straight to store_training() (env = site); pop@pheno = mean of the
+#         plots of each id over all sites
 
-# Genetic values in the trial environment (multi_asr_output needs nenvs > 1:
-# auxiliary environment, dropped afterwards, as in phenotype_met)
-envs_calc <- c(design_envs, setdiff(seq_len(nrow(covs_tpe)), design_envs)[1])
+n_sites_design <- length(design_envs)
+
+# Genetic values in the environment of each site (multi_asr_output needs
+# nenvs > 1: auxiliary environment with a single site, dropped afterwards)
+envs_calc <- if (n_sites_design == 1) {
+  c(design_envs, setdiff(seq_len(nrow(covs_tpe)), design_envs)[1])
+} else {
+  design_envs
+}
 gv_design <- multi_asr_output(
   pop = design_pop,
   ntraits = 1,
@@ -17,14 +24,18 @@ gv_design <- multi_asr_output(
   nreps = 1,
   cov.mat = covs_tpe[envs_calc, , drop = FALSE]
 ) |>
-  filter(as.integer(as.character(env)) == 1) |>
-  mutate(id = sprintf("%.0f", as.numeric(as.character(id)))) |>
-  select(id, gv.Trait1)
+  mutate(
+    site = as.integer(as.character(env)),
+    id = sprintf("%.0f", as.numeric(as.character(id)))
+  ) |>
+  filter(site <= n_sites_design) |>
+  select(site, id, gv.Trait1)
 
-# Spatially correlated plot errors on the whole grid (one block: the design is in
-# the layout, not in FieldSimR), with the AR1 correlations of the odw design model
+# Spatially correlated plot errors of each site (one block: the design is in the
+# layout, not in FieldSimR), independent between sites, with the AR1
+# correlations of the odw design model
 err_design <- field_trial_error(
-  nenvs = 1,
+  nenvs = n_sites_design,
   nblocks = 1,
   varR = design_varR,
   spatial.model = "AR1",
@@ -34,20 +45,21 @@ err_design <- field_trial_error(
   nrows = design_nrows
 ) |>
   mutate(
+    site = as.integer(as.character(env)),
     col = as.numeric(as.character(col)),
     row = as.numeric(as.character(row))
   ) |>
-  select(col, row, e.Trait1)
+  select(site, col, row, e.Trait1)
 
 # Plot phenotypes: y = gv + plot error. Same column types as the FieldSimR output
 # (factors) so that bind_rows() in store_training() works with the other stages
 pheno_design <- design_layout |>
-  left_join(gv_design, by = "id") |>
-  left_join(err_design, by = c("col", "row")) |>
+  left_join(gv_design, by = c("site", "id")) |>
+  left_join(err_design, by = c("site", "col", "row")) |>
   mutate(
     y.Trait1 = gv.Trait1 + e.Trait1,
-    env = factor(1),
-    block = factor(block),
+    env = factor(site),
+    block = factor(1),
     col = factor(col),
     row = factor(row)
   )

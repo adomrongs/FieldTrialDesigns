@@ -1,10 +1,12 @@
-# Advance breeding program by 1 year
+# Advance breeding program by 1 year (phenotypic selection: burn-in and PS_RCBD)
 # Order S5 -> S1: each stage selects from last year's population before it is replaced
 # (S2 is selected from S1 and evaluated in the same year, so it goes after S1)
 cat(" Advance year \n")
+index <- output$year == year
 
 # S5
-S5 <- selectInd(pop = S4, nInd = nS5)
+output$acc_S4[index] <- safe_cor(S4@pheno[, 1], tpe_value(S4, cov_tpe_on))
+S5 <- selectInd(pop = S4, nInd = nS5) # mean of the plots of each entry
 res <- phenotype_met(
   pop = S5,
   envs = met_envs(samples_met, simYear, nEnvS5),
@@ -17,33 +19,17 @@ res <- phenotype_met(
 )
 S5 <- res$pop
 train_data <- store_training(train_data, res, year, "S5")
+output$mean_gv_S5[index] <- mean(tpe_value(S5, cov_tpe_on))
 
-# S4
+# S4: phenotyped with the design of the scenario (S4design, PhenotypeS4.R)
+output$acc_S3[index] <- safe_cor(S3@pheno[, 1], tpe_value(S3, cov_tpe_on))
 S4 <- selectInd(pop = S3, nInd = nS4) # mean of the plots of each entry
-
-# S3 metrics: accuracy of the values used to select S4 (vs the genetic value in
-# the S3 trial environment of last year and in the TPE) and response in S4
-env_S3 <- met_envs(samples_met, simYear - 1, nEnvS3)
-gv_S3_met <- as.numeric(S3@gv[, 1] + S3@gv[, -1, drop = FALSE] %*% covs_tpe[env_S3, ])
-gv_S3_tpe <- as.numeric(S3@gv[, 1] + S3@gv[, -1, drop = FALSE] %*% colMeans(covs_tpe))
-output$acc_S3_met[output$year == year] <- safe_cor(S3@pheno[, 1], gv_S3_met)
-output$acc_S3_tpe[output$year == year] <- safe_cor(S3@pheno[, 1], gv_S3_tpe)
-output$resp_S4[output$year == year] <- mean(gv_S3_tpe[S3@id %in% S4@id]) - mean(gv_S3_tpe)
-
-res <- phenotype_met(
-  pop = S4,
-  envs = met_envs(samples_met, simYear, nEnvS4),
-  cov.mat = covs_tpe,
-  nreps = nRepS4,
-  varR = varES4,
-  ncols = nColS4,
-  nrows = nRowS4,
-  return.pheno = TRUE
-)
-S4 <- res$pop
+source("code/processes/PhenotypeS4.R")
 train_data <- store_training(train_data, res, year, "S4")
+S4 <- res$pop[res$pop@id %in% S4@id]
 
 # S3: phenotyped with the design of the scenario (S3design, PhenotypeS3.R)
+output$acc_S2[index] <- safe_cor(S2@pheno[, 1], tpe_value(S2, cov_tpe_on))
 S3 <- selectInd(pop = S2, nInd = nS3)
 source("code/processes/PhenotypeS3.R")
 train_data <- store_training(train_data, res, year, "S3")
@@ -60,7 +46,7 @@ S1 <- phenotype_met(
   ncols = nColS1,
   nrows = nRowS1
 )
-output <- save_output(df = output, pop = S1, year = year)
+output$mean_gv_S1[index] <- mean(tpe_value(S1, cov_tpe_on))
 
 # S2: seedlings that pass the visual selection, evaluated the same year
 # (not stored for GS)

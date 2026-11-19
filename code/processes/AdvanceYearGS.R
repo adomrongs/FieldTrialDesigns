@@ -1,9 +1,12 @@
-# Advance breeding program by 1 year in the GS scenarios
+# Advance breeding program by 1 year in the GS scenarios: S3, S4 and S5 are
+# selected on the GEBVs of FitModel.R (run at the start of the year)
 
 cat(" Advance year GS \n")
+index <- output$year == year
 
 # ------- Select S5 -------
-S5 <- selectInd(pop = S4, nInd = nS5)
+output$acc_S4[index] <- safe_cor(S4@ebv[, 1], tpe_value(S4, cov_tpe_on))
+S5 <- selectInd(pop = S4, nInd = nS5, use = "ebv")
 res <- phenotype_met(
   pop = S5,
   envs = met_envs(samples_met, simYear, nEnvS5),
@@ -16,33 +19,17 @@ res <- phenotype_met(
 )
 S5 <- res$pop
 train_data <- store_training(train_data, res, year, "S5")
+output$mean_gv_S5[index] <- mean(tpe_value(S5, cov_tpe_on))
 
 # ------- Select S4 -------
-S4 <- selectInd(pop = S3, nInd = nS4, use = "ebv") # GEBVs (FitModel.R)
-
-# S3 metrics: accuracy of the values used to select S4 (vs the genetic value in
-# the S3 trial environment of last year and in the TPE) and response in S4
-env_S3 <- met_envs(samples_met, simYear - 1, nEnvS3)
-gv_S3_met <- as.numeric(S3@gv[, 1] + S3@gv[, -1, drop = FALSE] %*% covs_tpe[env_S3, ])
-gv_S3_tpe <- as.numeric(S3@gv[, 1] + S3@gv[, -1, drop = FALSE] %*% colMeans(covs_tpe))
-output$acc_S3_met[output$year == year] <- safe_cor(S3@ebv[, 1], gv_S3_met)
-output$acc_S3_tpe[output$year == year] <- safe_cor(S3@ebv[, 1], gv_S3_tpe)
-output$resp_S4[output$year == year] <- mean(gv_S3_tpe[S3@id %in% S4@id]) - mean(gv_S3_tpe)
-
-res <- phenotype_met(
-  pop = S4,
-  envs = met_envs(samples_met, simYear, nEnvS4),
-  cov.mat = covs_tpe,
-  nreps = nRepS4,
-  varR = varES4,
-  ncols = nColS4,
-  nrows = nRowS4,
-  return.pheno = TRUE
-)
-S4 <- res$pop
+output$acc_S3[index] <- safe_cor(S3@ebv[, 1], tpe_value(S3, cov_tpe_on))
+S4 <- selectInd(pop = S3, nInd = nS4, use = "ebv")
+source("code/processes/PhenotypeS4.R")
 train_data <- store_training(train_data, res, year, "S4")
+S4 <- res$pop[res$pop@id %in% S4@id]
 
 # ------- Select S3 -------
+output$acc_S2[index] <- safe_cor(S2@ebv[, 1], tpe_value(S2, cov_tpe_on))
 S3 <- selectInd(pop = S2, nInd = nS3, use = "ebv")
 source("code/processes/PhenotypeS3.R")
 train_data <- store_training(train_data, res, year, "S3")
@@ -59,11 +46,10 @@ S1 <- phenotype_met(
   ncols = nColS1,
   nrows = nRowS1
 )
-output <- save_output(df = output, pop = S1, year = year)
-output$acc_gs[output$year == year] <- acc_gs
+output$mean_gv_S1[index] <- mean(tpe_value(S1, cov_tpe_on))
 
-# ------- Select S2s -------
-S2 <- selectInd(pop = S1, nInd = nS2)
+# ------- Select S2s (genotyped, not phenotyped) -------
+S2 <- selectInd(pop = S1, nInd = nS2GS)
 
 # ------- Store TRP data -------
 first_year <- year - nYearsTrain

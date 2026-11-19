@@ -3,6 +3,7 @@
 
 # ------- Prepare Data -------
 # Load packages
+rm(list = ls())
 library(AlphaSimR)
 library(FieldSimR)
 library(dplyr)
@@ -14,7 +15,8 @@ args <- commandArgs(trailingOnly = TRUE)
 Rep <- if (length(args) > 0) as.integer(args[1]) else 1
 cat("\nWorking on replicate:", Rep, "\n")
 Scenario <- "BurnIn"
-S3design <- "RCBD"
+S3design <- "RCBD" # 1 site, 3 blocks
+S4design <- "RCBD" # 1 site, 3 blocks
 
 # Build TPE (same seed in every replicate), then a seed per replicate
 set.seed(2026)
@@ -25,11 +27,13 @@ set.seed(Rep)
 source("code/processes/CreateFounders.R")
 
 # Define output
+output_years <- 1:nCycles
 source("code/processes/StoreVariables.R")
-output$rep <- Rep
 
-# Sample MET environments from the TPE (one sample per simulation year)
+# Sample MET environments from the TPE (one sample per simulation year; ~10 %
+# of them are off-TPE) and mean covariates of the TPE environments (target)
 covs_tpe <- input_asr$cov.mat
+cov_tpe_on <- colMeans(covs_tpe[envs_on, , drop = FALSE])
 samples_met <- sample_met(
   nenvs = p,
   nsamples = nStages + nCycles + nFuture,
@@ -64,7 +68,7 @@ save.image(
   file.path("outputs", "burnin", sprintf("%s_rep%02d.RData", Scenario, Rep))
 )
 
-# Output of this replicate 
+# Output of this replicate
 dir.create(
   file.path("outputs", Scenario),
   showWarnings = FALSE,

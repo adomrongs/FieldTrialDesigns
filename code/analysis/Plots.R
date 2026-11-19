@@ -4,57 +4,37 @@
 # ------- Prepare Data -------
 # Load packages
 rm(list = ls())
-library(ggplot2)
-library(tidyr)
-library(dplyr)
 library(patchwork)
+library(tidyverse)
 
-# Define scenarios and colours (the same colour for each scenario in every plot)
+# Define scenarios and colours (the same colour for each scenario in every plot).
+# Every scenario has the same budget: S2 50,000 EUR + S3 and S4 240,000 EUR per year
 scenarios <- c(
   "PS_RCBD",
   "GS_RCBD",
-  "GS_Augmented",
-  "GS_pREP_odw",
-  "GS_pREP_TrainSel"
+  "ES2",
+  "ES2_ST",
+  "I1",
+  "I2",
+  "I3",
+  "I4",
+  "ES1",
+  "I3_FixedRandom",
+  "I3_FixedGRM"
 )
 colors_scenario <- c(
   PS_RCBD = "#335c67",
   GS_RCBD = "#2d6a4f",
-  GS_Augmented = "#fff3b0",
-  GS_pREP_odw = "#540b0e",
-  GS_pREP_TrainSel = "#e09f3e"
+  ES2 = "#7f2704",
+  ES2_ST = "#a63603",
+  I1 = "#d94801",
+  I2 = "#f16913",
+  I3 = "#fd8d3c",
+  I4 = "#6a51a3",
+  ES1 = "#3f007d",
+  I3_FixedRandom = "#bdbdbd",
+  I3_FixedGRM = "#636363"
 )
-
-# colors_scenario <- c(
-#   BurnIn = "#335c67",
-#   PS_RCBD = "#fff3b0",
-#   GS_RCBD = "#e09f3e",
-#   GS_Augmented = "#9e2a2b",
-#   GS_pREP_odw = "#540b0e"
-# )
-
-# Cost per plot (phenotyping) and per sample (genotyping), EUR
-cost_plot_S2 <- 100
-cost_plot_S3 <- 250
-cost_geno <- 40
-
-# Annual cost of what differs between the programs: S2 (phenotyped in PS,
-# genotyped in GS) + S3 plots (design). S1, S4 and S5 are the same in all of them
-plots_S3 <- c(
-  PS_RCBD = 600,
-  GS_RCBD = 600,
-  GS_Augmented = 240,
-  GS_pREP_odw = 228,
-  GS_pREP_TrainSel = 228
-)
-cost_S2 <- c(
-  PS_RCBD = 1000 * cost_plot_S2,
-  GS_RCBD = 1000 * cost_geno,
-  GS_Augmented = 1000 * cost_geno,
-  GS_pREP_odw = 1000 * cost_geno,
-  GS_pREP_TrainSel = 1000 * cost_geno
-)
-cost_scenario <- cost_S2 + plots_S3 * cost_plot_S3
 
 # Read outputs
 burnin <- read.csv("outputs/BurnIn_output.csv")
@@ -64,20 +44,19 @@ future <- bind_rows(
 )
 last_burnin <- max(burnin$year)
 
-# Genetic gain w.r.t. the end of the burn-in of each replicate, and gain per
-# EUR of the annual cost of the program
+# Genetic gain in S1 and S5 w.r.t. the end of the burn-in of each replicate
 gv_start <- burnin |>
   filter(year == last_burnin) |>
-  select(rep, gv_start = mean_gv_tpe)
+  select(rep, start_S1 = mean_gv_S1, start_S5 = mean_gv_S5)
 
 results <- bind_rows(burnin, future) |>
   left_join(gv_start, by = "rep") |>
   mutate(
-    gain = mean_gv_tpe - gv_start,
-    gain_cost = gain / cost_scenario[scenario],
-    scenario = factor(scenario, levels = names(colors_scenario))
+    gain_S1 = mean_gv_S1 - start_S1,
+    gain_S5 = mean_gv_S5 - start_S5,
+    scenario = factor(scenario, levels = c("BurnIn", scenarios))
   ) |>
-  select(-gv_start)
+  select(year, rep, scenario, gain_S1, gain_S5, acc_S2, acc_S3, acc_S4)
 
 # Mean and 95 % CI (t distribution, as t.test) of every variable across the
 # replicates, per scenario and year
@@ -97,11 +76,11 @@ summary_results <- results |>
 
 # Names of the variables shown in the facet strips
 labels_variable <- c(
-  gain = "Genetic gain (TPE)",
-  gain_cost = "Genetic gain per EUR of annual cost (TPE)",
-  acc_S3_met = "Selection accuracy in S3 (trial environment)",
-  acc_S3_tpe = "Selection accuracy in S3 (TPE)",
-  acc_gs = "Selection accuracy in S2 (TPE)"
+  gain_S1 = "Genetic gain in S1 (TPE)",
+  gain_S5 = "Genetic gain in S5 (TPE)",
+  acc_S2 = "Selection accuracy in S2 (TPE)",
+  acc_S3 = "Selection accuracy in S3 (TPE)",
+  acc_S4 = "Selection accuracy in S4 (TPE)"
 )
 
 dir.create("outputs/plots", showWarnings = FALSE, recursive = TRUE)
@@ -109,56 +88,40 @@ dir.create("outputs/plots", showWarnings = FALSE, recursive = TRUE)
 # ------- Genetic gain -------
 # Future years, starting from 0 at the end of the burn-in
 p1 <- summary_results |>
-  filter(variable == "gain", scenario %in% scenarios) |>
-  bind_rows(data.frame(
-    scenario = factor(scenarios, levels = names(colors_scenario)),
-    variable = "gain",
+  filter(variable %in% c("gain_S1", "gain_S5"), scenario %in% scenarios) |>
+  bind_rows(expand.grid(
+    scenario = factor(scenarios, levels = c("BurnIn", scenarios)),
+    variable = c("gain_S1", "gain_S5"),
     year = last_burnin,
     mean = 0,
     lower = 0,
-    upper = 0
+    upper = 0,
+    stringsAsFactors = FALSE
   )) |>
   ggplot(aes(year, mean, colour = scenario, fill = scenario)) +
   geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3, colour = NA) +
   geom_line(linewidth = 0.8) +
   scale_colour_manual(values = colors_scenario) +
   scale_fill_manual(values = colors_scenario) +
-  facet_wrap(~variable, labeller = as_labeller(labels_variable)) +
+  facet_wrap(~variable, scales = "free_y", labeller = as_labeller(labels_variable)) +
   labs(x = "Year", y = NULL, colour = NULL, fill = NULL) +
   theme_bw() +
-  theme(legend.position = "top")
-
-p2 <- summary_results |>
-  filter(variable == "gain_cost") |>
-  ggplot(aes(year, mean, colour = scenario, fill = scenario)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3, colour = NA) +
-  geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = colors_scenario) +
-  scale_fill_manual(values = colors_scenario) +
-  facet_wrap(~variable, labeller = as_labeller(labels_variable)) +
-  labs(x = "Year", y = NULL, colour = NULL, fill = NULL) +
-  theme_bw() +
-  theme(legend.position = "top")
-
-p12 <- p1 +
-  p2 +
-  plot_layout(guides = "collect") &
   theme(legend.position = "top")
 
 ggsave(
   "outputs/plots/genetic_gain.png",
-  p12,
-  width = 7,
-  height = 4,
+  p1,
+  width = 10,
+  height = 5,
   dpi = 300,
   bg = "white"
 )
 
 
 # ------- Selection accuracy -------
-p3 <- summary_results |>
+p2 <- summary_results |>
   filter(
-    variable %in% c("acc_S3_met", "acc_S3_tpe"),
+    variable %in% c("acc_S2", "acc_S3", "acc_S4"),
     scenario %in% scenarios
   ) |>
   ggplot(aes(year, mean, colour = scenario, fill = scenario)) +
@@ -171,28 +134,9 @@ p3 <- summary_results |>
   theme_bw() +
   theme(legend.position = "top")
 
-p4 <- summary_results |>
-  filter(variable == "acc_gs", scenario %in% scenarios) |>
-  ggplot(aes(year, mean, colour = scenario, fill = scenario)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3, colour = NA) +
-  geom_line(linewidth = 0.8) +
-  facet_wrap(~variable, labeller = as_labeller(labels_variable)) +
-  # same scenarios in the legend as p3 (PS_RCBD has no GS accuracy), so that
-  # patchwork merges both legends into one
-  scale_colour_manual(values = colors_scenario, limits = scenarios) +
-  scale_fill_manual(values = colors_scenario, limits = scenarios) +
-  labs(x = "Year", y = NULL, colour = NULL, fill = NULL) +
-  theme_bw() +
-  theme(legend.position = "top")
-
-p34 <- p3 +
-  p4 +
-  plot_layout(widths = c(2, 1), guides = "collect") &
-  theme(legend.position = "top")
-
 ggsave(
   "outputs/plots/selection_accuracy.png",
-  p34,
+  p2,
   width = 15,
   height = 5,
   dpi = 300,

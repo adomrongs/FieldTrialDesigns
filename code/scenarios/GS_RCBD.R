@@ -1,12 +1,13 @@
-# Script to run the GS scenario assuming a RCBD with 3 blocks
+# Script to run the scenario GS_RCBD: Actual program with GS: S3 RCBD (1 site x 3 blocks, 600 plots) and S4 RCBD (1 site x 3 blocks, 60 plots).
+# Budget of S3 + S4 = 240,000 EUR/year (37.5 % to S4)
 
 # ------- Prepare Data -------
 # Load packages
 library(AlphaSimR)
 library(FieldSimR)
-library(dplyr)
-library(SpATS)
 library(sommer)
+library(odw)
+library(dplyr)
 source("code/processes/GlobalParameters.R")
 
 # Define variables
@@ -18,30 +19,21 @@ load(file.path("outputs", "burnin", sprintf("BurnIn_rep%02d.RData", Rep)))
 source("code/processes/GlobalParameters.R")
 source("code/processes/HelperFunctions.R")
 Scenario <- "GS_RCBD"
-S3design <- "RCBD"
+
+# Designs of S3 and S4
+S3design <- "RCBD" # 200 entries, 1 site x 3 blocks (60 x 10)
+S4design <- "RCBD" # 20 entries, 1 site x 3 blocks (12 x 5)
+
+# GS genotypes nS2GS S2 (same budget as the 500 phenotyped in PS): select them
+# again from the S1 of the last burn-in year
+S2 <- selectInd(pop = S1, nInd = nS2GS)
 
 # Define output
-future_years <- (nCycles + 1):(nCycles + nFuture)
-output <- data.frame(
-  year = future_years,
-  rep = Rep,
-  scenario = Scenario,
-  mean_gv_tpe = NA_real_,
-  mean_gv_met = NA_real_,
-  var_gv_tpe = NA_real_,
-  var_gv_met = NA_real_,
-  acc_tpe = NA_real_,
-  acc_met = NA_real_,
-  met_tpe = NA_real_,
-  h2 = NA_real_,
-  acc_gs = NA_real_,
-  acc_S3_met = NA_real_,
-  acc_S3_tpe = NA_real_,
-  resp_S4 = NA_real_
-)
+output_years <- (nCycles + 1):(nCycles + nFuture)
+source("code/processes/StoreVariables.R")
 
 # ------- Run Future scenario -------
-for (year in future_years) {
+for (year in output_years) {
   cat("Working on year: ", year)
   simYear <- nStages + year
 
@@ -52,7 +44,7 @@ for (year in future_years) {
   source("code/processes/AdvanceYearGS.R")
 }
 
-# Save the results of this replicate 
+# Save the results of this replicate (combined with code/analysis/CombineOutputs.R)
 dir.create(
   file.path("outputs", Scenario),
   showWarnings = FALSE,
