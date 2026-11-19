@@ -76,7 +76,7 @@ nRowS5 <- 5
 nRepS4pREP <- 5
 nRowS4pREP <- 5
 nColS4pREP <- 5
-S4repAlloc <- "rotating"
+S4repAlloc <- "fixed_GRM" # rotating / fixed_random / fixed_GRM gave very similar results (19/11/2026)
 
 # odw design model: genotypes random with the GRM, variance ratio
 # gamma = sg2 / varE per plot, from the target reliability of the mean of nRep plots:

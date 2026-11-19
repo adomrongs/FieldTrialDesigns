@@ -18,9 +18,7 @@ scenarios <- c(
   "I2",
   "I3",
   "I4",
-  "ES1",
-  "I3_FixedRandom",
-  "I3_FixedGRM"
+  "ES1"
 )
 colors_scenario <- c(
   PS_RCBD = "#335c67",
@@ -31,9 +29,7 @@ colors_scenario <- c(
   I2 = "#f16913",
   I3 = "#fd8d3c",
   I4 = "#6a51a3",
-  ES1 = "#3f007d",
-  I3_FixedRandom = "#bdbdbd",
-  I3_FixedGRM = "#636363"
+  ES1 = "#3f007d"
 )
 
 # Read outputs

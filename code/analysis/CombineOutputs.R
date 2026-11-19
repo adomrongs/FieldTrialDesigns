@@ -15,9 +15,7 @@ scenarios <- c(
   "I2",
   "I3",
   "I4",
-  "ES1",
-  "I3_FixedRandom",
-  "I3_FixedGRM"
+  "ES1"
 )
 
 for (scenario in scenarios) {
