@@ -1,0 +1,66 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{lmodern}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{pdflscape}
+\usepackage{graphicx}
+\usepackage{makecell}
+\usepackage{eurosym}
+
+\begin{document}
+
+\begin{landscape}
+\begin{table}[p]
+\centering
+\caption{Escenarios de reparto de recursos entre S3 y S4 (presupuesto S3 + S4 = 240.000\,\euro{}/año).}
+\label{tab:escenarios}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llllrrlrrlrr}
+\toprule
+ & & \multicolumn{4}{c}{\textbf{S3}} & \multicolumn{3}{c}{\textbf{S4}} & & \multicolumn{2}{c}{\textbf{\% seleccionado}} \\
+\cmidrule(lr){3-6} \cmidrule(lr){7-9} \cmidrule(lr){11-12}
+\textbf{Escenario} & \textbf{Selección} & \textbf{Diseño} & \textbf{Sitios} & \textbf{Entradas} & \makecell[r]{\textbf{Parcelas}\\\textbf{(por entrada)}} &
+\textbf{Diseño} & \textbf{Sitios} & \makecell[r]{\textbf{Parcelas}\\\textbf{(por entrada)}} &
+\makecell[l]{\textbf{Coste S3 / S4}\\\textbf{(\% a S4)}} & \textbf{S2$\to$S3} & \textbf{S3$\to$S4} \\
+\midrule
+PS\_RCBD & Fenotipo & RCBD $\times$ 3 & 1 & 200 & 600 (3)    & RCBD $\times$ 3 & 1 & 60 (3)     & 150k / 90k (37,5\,\%)      & 40\,\% (200/500)   & 10\,\% \\
+GS\_RCBD & GEBV     & RCBD $\times$ 3 & 1 & 200 & 600 (3)    & RCBD $\times$ 3 & 1 & 60 (3)     & 150k / 90k (37,5\,\%)      & 16\,\% (200/1.250) & 10\,\% \\
+\addlinespace
+ES2      & GEBV & \makecell[l]{Multi-localización completo,\\sin repetir} & 4 & 200 & 800 (4) & p-rep 25\,\% & 1 & 25 (1,25) & 200k / 37,5k (16\,\%)$^{*}$ & 16\,\% & 10\,\% \\
+ES2\_ST  & GEBV & Sparse (54 + 81/sitio) & 6 & 540 & 810 (1,5)  & p-rep 25\,\% & 1 & 25 (1,25)  & 202,5k / 37,5k (16\,\%)   & 43\,\% & 3,7\,\% \\
+\addlinespace
+I1       & GEBV & Sparse (44 + 66/sitio) & 6 & 440 & 660 (1,5)  & p-rep 25\,\% & 2 & 50 (2,5)   & 165k / 75k (31\,\%)       & 35\,\% & 4,5\,\% \\
+I2       & GEBV & Sparse (34 + 51/sitio) & 6 & 340 & 510 (1,5)  & p-rep 25\,\% & 3 & 75 (3,75)  & 127,5k / 112,5k (47\,\%)  & 27\,\% & 5,9\,\% \\
+I3       & GEBV & Sparse (24 + 36/sitio) & 6 & 240 & 360 (1,5)  & p-rep 25\,\% & 4 & 100 (5)    & 90k / 150k (62,5\,\%)     & 19\,\% & 8,3\,\% \\
+I4       & GEBV & Sparse (17 + 53/sitio) & 3 & 176 & 210 (1,19) & p-rep 25\,\% & 5 & 125 (6,25) & 52,5k / 187,5k (78\,\%)   & 14\,\% & 11,4\,\% \\
+\addlinespace
+ES1      & GEBV & p-rep (200 + 10 replicadas) & 1 & 200 & 210 (1,05) & p-rep 25\,\% & 5 & 125 (6,25) & 52,5k / 187,5k (78\,\%) & 16\,\% & 10\,\% \\
+\bottomrule
+\end{tabular}%
+}
+
+\vspace{1em}
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{*}$ES2 gasta 237.500\,\euro{}.
+Sparse: entradas comunes en todos los sitios + entradas únicas por sitio (1 parcela en 1 sitio).
+
+\textbf{Común a todos los escenarios:} S2 = 50.000\,\euro{}/año (PS fenotipa 500 individuos a 100\,\euro{}; GS genotipa 1.250 a 40\,\euro{}); parcela S3 = 250\,\euro{}, parcela S4 = 1.500\,\euro{};
+S4 con 20 entradas (en el p-rep, 20 + 5 replicadas por sitio, las mismas replicadas en todos los sitios, elegidas con la GRM); S5 en 6 ambientes; mismo modelo de una sola etapa.
+
+\vspace{0.5em}
+\textbf{Orden de comparación:}
+PS\_RCBD $\to$ GS\_RCBD (efecto de GS);
+GS\_RCBD $\to$ ES2 (en S3, localizaciones frente a repeticiones, a la vez que S4 se reduce al mínimo);
+ES2 $\to$ ES2\_ST (sparse testing);
+ES2\_ST $\to$ I1 $\to$ I2 $\to$ I3 $\to$ I4 (parcelas de S3 a S4, curva principal);
+I4 $\to$ ES1 (presupuesto mínimo en S3: 3 localizaciones frente a 1).
+\end{minipage}
+\end{table}
+\end{landscape}
+
+\end{document}

@@ -4,32 +4,45 @@
 # ------- Prepare Data -------
 # Load packages
 rm(list = ls())
-library(patchwork)
 library(tidyverse)
 
-# Define scenarios and colours (the same colour for each scenario in every plot).
+# Define scenarios, colours and line types (the same for each scenario in every plot).
 # Every scenario has the same budget: S2 50,000 EUR + S3 and S4 240,000 EUR per year
+#   controls (red): PS_RCBD dashed (phenotypic selection), GS_RCBD solid
+#   extremes (blues, dark to light): ES1, ES2, ES2_ST
+#   intermediates (greens, light to dark): I1 to I4
 scenarios <- c(
   "PS_RCBD",
   "GS_RCBD",
+  "ES1",
   "ES2",
   "ES2_ST",
   "I1",
   "I2",
   "I3",
-  "I4",
-  "ES1"
+  "I4"
 )
 colors_scenario <- c(
-  PS_RCBD = "#335c67",
-  GS_RCBD = "#2d6a4f",
-  ES2 = "#7f2704",
-  ES2_ST = "#a63603",
-  I1 = "#d94801",
-  I2 = "#f16913",
-  I3 = "#fd8d3c",
-  I4 = "#6a51a3",
-  ES1 = "#3f007d"
+  PS_RCBD = "#DD5129",
+  GS_RCBD = "#DD5129",
+  ES1 = "#0B2E59",
+  ES2 = "#4A86D6",
+  ES2_ST = "#8AB6F2",
+  I1 = "#A8DDA0",
+  I2 = "#6BBF63",
+  I3 = "#2E8B3E",
+  I4 = "#0B3D1E"
+)
+linetypes_scenario <- c(
+  PS_RCBD = "dashed",
+  GS_RCBD = "solid",
+  ES1 = "solid",
+  ES2 = "solid",
+  ES2_ST = "solid",
+  I1 = "solid",
+  I2 = "solid",
+  I3 = "solid",
+  I4 = "solid"
 )
 
 # Read outputs
@@ -45,30 +58,21 @@ gv_start <- burnin |>
   filter(year == last_burnin) |>
   select(rep, start_S1 = mean_gv_S1, start_S5 = mean_gv_S5)
 
-results <- bind_rows(burnin, future) |>
+results <- future |>
   left_join(gv_start, by = "rep") |>
   mutate(
     gain_S1 = mean_gv_S1 - start_S1,
     gain_S5 = mean_gv_S5 - start_S5,
-    scenario = factor(scenario, levels = c("BurnIn", scenarios))
+    scenario = factor(scenario, levels = scenarios)
   ) |>
   select(year, rep, scenario, gain_S1, gain_S5, acc_S2, acc_S3, acc_S4)
 
-# Mean and 95 % CI (t distribution, as t.test) of every variable across the
-# replicates, per scenario and year
+# Mean and SD of every variable across the replicates, per scenario and year.
+# The SD of the genetic gain measures its stability (as in Werner et al. 2025)
 summary_results <- results |>
   pivot_longer(-c(year, rep, scenario), names_to = "variable") |>
   filter(!is.na(value)) |>
-  summarise(
-    n = n(),
-    mean = mean(value),
-    se = sd(value) / sqrt(n),
-    .by = c(scenario, year, variable)
-  ) |>
-  mutate(
-    lower = mean - qt(0.975, n - 1) * se,
-    upper = mean + qt(0.975, n - 1) * se
-  )
+  summarise(mean = mean(value), sd = sd(value), .by = c(scenario, year, variable))
 
 # Names of the variables shown in the facet strips
 labels_variable <- c(
@@ -81,60 +85,104 @@ labels_variable <- c(
 
 dir.create("outputs/plots", showWarnings = FALSE, recursive = TRUE)
 
-# ------- Genetic gain -------
-# Future years, starting from 0 at the end of the burn-in
-p1 <- summary_results |>
-  filter(variable %in% c("gain_S1", "gain_S5"), scenario %in% scenarios) |>
-  bind_rows(expand.grid(
-    scenario = factor(scenarios, levels = c("BurnIn", scenarios)),
-    variable = c("gain_S1", "gain_S5"),
-    year = last_burnin,
-    mean = 0,
-    lower = 0,
-    upper = 0,
-    stringsAsFactors = FALSE
-  )) |>
-  ggplot(aes(year, mean, colour = scenario, fill = scenario)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3, colour = NA) +
-  geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = colors_scenario) +
-  scale_fill_manual(values = colors_scenario) +
-  facet_wrap(~variable, scales = "free_y", labeller = as_labeller(labels_variable)) +
-  labs(x = "Year", y = NULL, colour = NULL, fill = NULL) +
-  theme_bw() +
-  theme(legend.position = "top")
-
-ggsave(
-  "outputs/plots/genetic_gain.png",
-  p1,
-  width = 10,
-  height = 5,
-  dpi = 300,
-  bg = "white"
+# Groups of scenarios plotted together (the controls in every group)
+controls <- c("PS_RCBD", "GS_RCBD")
+groups <- list(
+  extremes = c(controls, "ES1", "ES2", "ES2_ST"),
+  intermediates = c(controls, "I1", "I2", "I3", "I4")
 )
 
+for (group in names(groups)) {
+  scenarios_group <- groups[[group]]
 
-# ------- Selection accuracy -------
-p2 <- summary_results |>
-  filter(
-    variable %in% c("acc_S2", "acc_S3", "acc_S4"),
-    scenario %in% scenarios
-  ) |>
-  ggplot(aes(year, mean, colour = scenario, fill = scenario)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3, colour = NA) +
-  geom_line(linewidth = 0.8) +
-  facet_wrap(~variable, labeller = as_labeller(labels_variable)) +
-  scale_colour_manual(values = colors_scenario) +
-  scale_fill_manual(values = colors_scenario) +
-  labs(x = "Year", y = NULL, colour = NULL, fill = NULL) +
-  theme_bw() +
-  theme(legend.position = "top")
+  # ------- Genetic gain -------
+  # Future years, starting from 0 at the end of the burn-in
+  p1 <- summary_results |>
+    filter(variable %in% c("gain_S1", "gain_S5"), scenario %in% scenarios_group) |>
+    bind_rows(expand.grid(
+      scenario = factor(scenarios_group, levels = scenarios),
+      variable = c("gain_S1", "gain_S5"),
+      year = last_burnin,
+      mean = 0,
+      stringsAsFactors = FALSE
+    )) |>
+    ggplot(aes(year, mean, colour = scenario, linetype = scenario)) +
+    geom_line(linewidth = 0.8) +
+    scale_colour_manual(values = colors_scenario) +
+    scale_linetype_manual(values = linetypes_scenario) +
+    facet_wrap(~variable, scales = "free_y", labeller = as_labeller(labels_variable)) +
+    labs(x = "Year", y = NULL, colour = NULL, linetype = NULL) +
+    theme_bw() +
+    theme(legend.position = "top")
 
-ggsave(
-  "outputs/plots/selection_accuracy.png",
-  p2,
-  width = 15,
-  height = 5,
-  dpi = 300,
-  bg = "white"
-)
+  ggsave(
+    file.path("outputs/plots", paste0("genetic_gain_", group, ".png")),
+    p1,
+    width = 10,
+    height = 5,
+    dpi = 300,
+    bg = "white"
+  )
+
+  # ------- Selection accuracy -------
+  p2 <- summary_results |>
+    filter(
+      variable %in% c("acc_S2", "acc_S3", "acc_S4"),
+      scenario %in% scenarios_group
+    ) |>
+    ggplot(aes(year, mean, colour = scenario, linetype = scenario)) +
+    geom_line(linewidth = 0.8) +
+    scale_colour_manual(values = colors_scenario) +
+    scale_linetype_manual(values = linetypes_scenario) +
+    facet_wrap(~variable, labeller = as_labeller(labels_variable)) +
+    labs(x = "Year", y = NULL, colour = NULL, linetype = NULL) +
+    theme_bw() +
+    theme(legend.position = "top")
+
+  ggsave(
+    file.path("outputs/plots", paste0("selection_accuracy_", group, ".png")),
+    p2,
+    width = 15,
+    height = 5,
+    dpi = 300,
+    bg = "white"
+  )
+
+  # ------- SD of the genetic gain -------
+  # SD across the replicates (stability of the gain), starting from 0 at the
+  # end of the burn-in
+  p3 <- summary_results |>
+    filter(variable %in% c("gain_S1", "gain_S5"), scenario %in% scenarios_group) |>
+    bind_rows(expand.grid(
+      scenario = factor(scenarios_group, levels = scenarios),
+      variable = c("gain_S1", "gain_S5"),
+      year = last_burnin,
+      sd = 0,
+      stringsAsFactors = FALSE
+    )) |>
+    ggplot(aes(year, sd, colour = scenario, linetype = scenario)) +
+    geom_line(linewidth = 0.8) +
+    scale_colour_manual(values = colors_scenario) +
+    scale_linetype_manual(values = linetypes_scenario) +
+    facet_wrap(~variable, scales = "free_y", labeller = as_labeller(labels_variable)) +
+    labs(x = "Year", y = "SD across replicates", colour = NULL, linetype = NULL) +
+    theme_bw() +
+    theme(legend.position = "top")
+
+  ggsave(
+    file.path("outputs/plots", paste0("sd_genetic_gain_", group, ".png")),
+    p3,
+    width = 10,
+    height = 5,
+    dpi = 300,
+    bg = "white"
+  )
+}
+
+# SD of the genetic gain in the last year, per scenario
+summary_results |>
+  filter(variable %in% c("gain_S1", "gain_S5"), year == max(year)) |>
+  select(scenario, variable, mean, sd) |>
+  pivot_wider(names_from = variable, values_from = c(mean, sd)) |>
+  arrange(scenario) |>
+  print()
