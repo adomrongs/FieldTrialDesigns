@@ -15,7 +15,8 @@ scenarios <- c(
   "I2",
   "I3",
   "I4",
-  "ES1"
+  "ES1",
+  "ES2_ST_G"
 )
 
 for (scenario in scenarios) {

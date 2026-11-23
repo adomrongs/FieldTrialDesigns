@@ -11,6 +11,7 @@ library(tidyverse)
 #   controls (red): PS_RCBD dashed (phenotypic selection), GS_RCBD solid
 #   extremes (blues, dark to light): ES1, ES2, ES2_ST
 #   intermediates (greens, light to dark): I1 to I4
+#   ES2_ST_G (purple): ES2 entries in sparse testing + the savings to genotype more S2
 scenarios <- c(
   "PS_RCBD",
   "GS_RCBD",
@@ -20,7 +21,8 @@ scenarios <- c(
   "I1",
   "I2",
   "I3",
-  "I4"
+  "I4",
+  "ES2_ST_G"
 )
 colors_scenario <- c(
   PS_RCBD = "#DD5129",
@@ -31,7 +33,8 @@ colors_scenario <- c(
   I1 = "#A8DDA0",
   I2 = "#6BBF63",
   I3 = "#2E8B3E",
-  I4 = "#0B3D1E"
+  I4 = "#0B3D1E",
+  ES2_ST_G = "#7B3294"
 )
 linetypes_scenario <- c(
   PS_RCBD = "dashed",
@@ -42,7 +45,8 @@ linetypes_scenario <- c(
   I1 = "solid",
   I2 = "solid",
   I3 = "solid",
-  I4 = "solid"
+  I4 = "solid",
+  ES2_ST_G = "solid"
 )
 
 # Read outputs
@@ -88,7 +92,7 @@ dir.create("outputs/plots", showWarnings = FALSE, recursive = TRUE)
 # Groups of scenarios plotted together (the controls in every group)
 controls <- c("PS_RCBD", "GS_RCBD")
 groups <- list(
-  extremes = c(controls, "ES1", "ES2", "ES2_ST"),
+  extremes = c(controls, "ES1", "ES2", "ES2_ST", "ES2_ST_G"),
   intermediates = c(controls, "I1", "I2", "I3", "I4")
 )
 
