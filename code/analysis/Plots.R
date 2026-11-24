@@ -7,46 +7,39 @@ rm(list = ls())
 library(tidyverse)
 
 # Define scenarios, colours and line types (the same for each scenario in every plot).
-# Every scenario has the same budget: S2 50,000 EUR + S3 and S4 240,000 EUR per year
+# Total budget ~290,000 EUR/year (S2 + S3 + S4) in every scenario
 #   controls (red): PS_RCBD dashed (phenotypic selection), GS_RCBD solid
-#   extremes (blues, dark to light): ES1, ES2, ES2_ST
-#   intermediates (greens, light to dark): I1 to I4
-#   ES2_ST_G (purple): ES2 entries in sparse testing + the savings to genotype more S2
+#   S3 vs S4 (blues, dark to light): S4_MAX, S3_MAX, S3_SPARSE
+#   more genotyping (purples, light to dark): GENO_3L, GENO_MAX, GENO_SPARSE
 scenarios <- c(
   "PS_RCBD",
   "GS_RCBD",
-  "ES1",
-  "ES2",
-  "ES2_ST",
-  "I1",
-  "I2",
-  "I3",
-  "I4",
-  "ES2_ST_G"
+  "S4_MAX",
+  "S3_MAX",
+  "S3_SPARSE",
+  "GENO_3L",
+  "GENO_MAX",
+  "GENO_SPARSE"
 )
 colors_scenario <- c(
   PS_RCBD = "#DD5129",
   GS_RCBD = "#DD5129",
-  ES1 = "#0B2E59",
-  ES2 = "#4A86D6",
-  ES2_ST = "#8AB6F2",
-  I1 = "#A8DDA0",
-  I2 = "#6BBF63",
-  I3 = "#2E8B3E",
-  I4 = "#0B3D1E",
-  ES2_ST_G = "#7B3294"
+  S4_MAX = "#0B2E59",
+  S3_MAX = "#4A86D6",
+  S3_SPARSE = "#8AB6F2",
+  GENO_3L = "#C2A5CF",
+  GENO_MAX = "#7B3294",
+  GENO_SPARSE = "#40004B"
 )
 linetypes_scenario <- c(
   PS_RCBD = "dashed",
   GS_RCBD = "solid",
-  ES1 = "solid",
-  ES2 = "solid",
-  ES2_ST = "solid",
-  I1 = "solid",
-  I2 = "solid",
-  I3 = "solid",
-  I4 = "solid",
-  ES2_ST_G = "solid"
+  S4_MAX = "solid",
+  S3_MAX = "solid",
+  S3_SPARSE = "solid",
+  GENO_3L = "solid",
+  GENO_MAX = "solid",
+  GENO_SPARSE = "solid"
 )
 
 # Read outputs
@@ -89,11 +82,13 @@ labels_variable <- c(
 
 dir.create("outputs/plots", showWarnings = FALSE, recursive = TRUE)
 
-# Groups of scenarios plotted together (the controls in every group)
+# Groups of scenarios plotted together
+#   allocation: S3 vs S4 (with the controls)
+#   genotyping: phenotyping in S3 vs genotyping S2 (references GS_RCBD, S3_MAX, S3_SPARSE)
 controls <- c("PS_RCBD", "GS_RCBD")
 groups <- list(
-  extremes = c(controls, "ES1", "ES2", "ES2_ST", "ES2_ST_G"),
-  intermediates = c(controls, "I1", "I2", "I3", "I4")
+  allocation = c(controls, "S4_MAX", "S3_MAX", "S3_SPARSE"),
+  genotyping = c("GS_RCBD", "S3_MAX", "S3_SPARSE", "GENO_3L", "GENO_MAX", "GENO_SPARSE")
 )
 
 for (group in names(groups)) {

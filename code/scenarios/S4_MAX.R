@@ -1,5 +1,6 @@
-# Script to run the scenario I4: intermediate 4: S3 sparse testing in 3 sites (176 entries, 210 plots); S4 p-rep in 5 sites (125 plots).
-# Budget of S3 + S4 = 240,000 EUR/year (78 % to S4)
+# Script to run the scenario S4_MAX (maximum budget to S4): S3 p-rep in 1 site (200 entries
+# + 10 replicated, 210 plots); S4 p-rep in 5 sites (125 plots). S3 + S4 = 240,000 EUR/year
+# (78 % to S4); S2 = 1250 genotyped (50,000 EUR)
 
 # ------- Prepare Data -------
 # Load packages
@@ -18,15 +19,13 @@ cat("\nWorking on replicate:", Rep, "\n")
 load(file.path("outputs", "burnin", sprintf("BurnIn_rep%02d.RData", Rep)))
 source("code/processes/GlobalParameters.R")
 source("code/processes/HelperFunctions.R")
-Scenario <- "I4"
+Scenario <- "S4_MAX"
 
 # Designs of S3 and S4
-S3design <- "sparse" # 17 commons + 53 uniques per site (7 x 10)
-nSitesS3 <- 3
-nS3 <- 176
-nCommonS3 <- 17
-nRowS3 <- 7
-nColS3 <- 10
+S3design <- "pREP" # 1 site, 200 entries + 10 replicated (14 x 15)
+nRepS3pREP <- 10
+nRowS3 <- 14
+nColS3 <- 15
 S4design <- "pREP" # 5 sites x (20 + 5 replicated)
 nSitesS4 <- 5
 

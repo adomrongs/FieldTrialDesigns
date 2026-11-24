@@ -9,14 +9,12 @@ scenarios <- c(
   "BurnIn",
   "PS_RCBD",
   "GS_RCBD",
-  "ES2",
-  "ES2_ST",
-  "I1",
-  "I2",
-  "I3",
-  "I4",
-  "ES1",
-  "ES2_ST_G"
+  "S4_MAX",
+  "S3_MAX",
+  "S3_SPARSE",
+  "GENO_MAX",
+  "GENO_3L",
+  "GENO_SPARSE"
 )
 
 for (scenario in scenarios) {
